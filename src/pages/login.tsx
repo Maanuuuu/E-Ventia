@@ -1,43 +1,43 @@
-import { useState  } from "react"
-import { supabase } from "../services/supabaseClient"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router"
+import { useAuth } from "../Context/AuthContext"
 
 export default function Login() {
-    const [email, setEmail] = useState<string>("")
-    
-    async function signInWithEmail(email:string): Promise<void> {
-        try {
-            const result = await supabase.auth.signInWithOtp({
-            email: email,
-            })
-            console.log("Sign in result:", result)
-        }
-        catch (error) {
-            console.error("Error signing in with email:", error)
-        }
-        
+  const [email, setEmail] = useState("")
+  const navigate = useNavigate()
+  const { user, signInWithOtp } = useAuth()
+
+  useEffect(() => {
+    if (user) {
+      navigate("/")  // Si ya hay usuario logueado, redirige a home
     }
-    
+  }, [user, navigate])
 
-    const handleSubmit = (e: any) => {
-        e.preventDefault()
-        signInWithEmail(email)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) return alert("Por favor, ingresa tu email")
+
+    const { error } = await signInWithOtp(email)
+    if (error) {
+      alert("Error al enviar el enlace de login: " + error)
+    } else {
+      alert("Revisa tu correo para el enlace de acceso")
     }
+  }
 
-    return (
-        <div>
-
-            <form onSubmit={handleSubmit}>
-                <input 
-                type="email" 
-                name="email" 
-                placeholder="your@email.com"
-                onChange={(e) => setEmail(e.target.value)}
-                />
-                <button>
-                    Send
-                </button>
-            </form>
-
-        </div>
-    )
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          name="email"
+          placeholder="your@email.com"
+          onChange={(e) => setEmail(e.target.value)}
+          value={email}
+          required
+        />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  )
 }
